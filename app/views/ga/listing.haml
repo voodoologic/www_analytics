@@ -1,3 +1,16 @@
+#spinner_modal.modal{:style => "display:none"}
+  .modal-header
+    %a.close{"data-dismiss" => "modal"}
+      ×
+    %h3
+      Loading...
+  .modal-body{:style => "height:100px; text-align:center;"}
+    = image_tag "ajax-loader.gif", :style => "margin-top:40px"
+  .modal-footer
+    -#%a.btn.btn-primary{:href => "#"}
+      Save changes
+    -#%a.btn{:href => "#"}
+      Close
 #gritter-notice-wrapper{style: "right: 400px;"}
   = gflash
 .content.span16.columns
@@ -43,6 +56,11 @@
       %tr
         %td{colspan: "2"}
           %div{ :id => "stats_#{listing.listingid}" }
+      %tr
+        %td{colspan: "2"}
+          %h3
+            Listing visitor locations:
+          = image_tag visitor_pin_map(@visitor_map, 720,450), {style: "margin: auto"}
   - if @columns
     %fieldset
       .results

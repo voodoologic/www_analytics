@@ -13,7 +13,7 @@ class GaController < ApplicationController # before_filter :profiles_list
       @listings = @report.listings
 
       if @results.count == 0
-        redirect_to reports_path
+        redirect_to request.referer
         gflash :warning => "Found zero results for the given search criteria."
       else
         aggregate_listings
