@@ -25,20 +25,24 @@
         = submit_tag "Submit"
 
   %table.span12.columns
-    %tr
-      %td
-        %div.pull-left
-          =image_tag @listing.images.first["full_url"]
-          %br
-            %h2
-              =@listing.location.address
-            %h2
-              ="#{@listing.location.city}, #{@listing.location.state}"
-            %h2
-              %span{:style => "font-weight:bold;"}
-                =number_to_currency(@listing.list_price, :precision => 0)
-  %a.btn{href: "#map" , :data =>  {toggle: "modal", target: "#map"}}
-    Map of viewers
+    - for listing in @listings
+      %tr
+        %td
+          %div.pull-left
+            =image_tag @listing.images.first["full_url"]
+        %td
+          %h2
+            =@listing.location.address
+          %h2
+            ="#{@listing.location.city}, #{@listing.location.state}"
+          %h2
+            %span{:style => "font-weight:bold;"}
+              =number_to_currency(@listing.list_price, :precision => 0)
+          %a.btn{href: "#map" , :data =>  {toggle: "modal", target: "#map"}}
+            Map of viewers
+      %tr
+        %td{colspan: "2"}
+          %div{ :id => "stats_#{listing.listingid}" }
   - if @columns
     %fieldset
       .results
@@ -68,8 +72,8 @@
 
     function drawChart() {
 
-    -#var listing_views = [
-    -# - @listing_page_visits.each do |listing|
+    -# var listing_views = [
+    - @listing_page_visits.each do |listing|
       - listing_id = listing[0]
       - date_visits_hash = listing[1]
       = "var listing_views_#{listing_id} = ["
@@ -149,7 +153,7 @@
 -#= debug @stuff
 -#- if defined? @results.fields
 = debug @columns
-= debug @listing
+-# = debug @listing
 #map.modal.fade
   .modal-header
     =link_to "x", "#", class: "close", "data-dismiss" => "modal"
@@ -158,5 +162,4 @@
   .modal-body
     = image_tag visitor_pin_map(@visitor_map)
   .modal-footer
-    =link_to "Continue to Analytics",@redirect, class: "btn btn-primary"
     =link_to "close", "#", class: "btn"
