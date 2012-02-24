@@ -22,14 +22,19 @@ class Report < Garb::ResultSet
       # @listing = WmsSvcConsumer::Models::Listing.find(snipe_listing_from_url(params["listing"]))
       @agent = @listings.first.agent
       @listingsids = @listings.map(&:listingid)
-      @results = filtered_results(GoogleAnalytics.const_get(param_to_class('social media')).results(profile,
-                                                                         # :filters => listings_to_filters(@listing ),
-                                                                         :filters => {:page_path.contains => @listingsids.first},
-                                                                         :end_date => Date.today,
-                                                                         # :start_date => Date.parse(params["start_date"])
-                                                                         :start_date => 1.month.ago
-                                                                        )
-                                  )
+      begin
+        @results = filtered_results(GoogleAnalytics.const_get(param_to_class('social media')).results(profile,
+                                                                          # :filters => listings_to_filters(@listing ),
+                                                                          :filters => {:page_path.contains => @listingsids.first},
+                                                                          :end_date => Date.today,
+                                                                          # :start_date => Date.parse(params["start_date"])
+                                                                          :start_date => 1.month.ago
+                                                                          )
+                                    )
+      rescue NoMethodError
+        @results = nil
+      end
+
       @columns = column_generator
 
     elsif params["agent"]

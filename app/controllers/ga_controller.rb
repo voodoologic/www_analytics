@@ -33,13 +33,18 @@ class GaController < ApplicationController # before_filter :profiles_list
     # @results = Report.new(params[:report])
     @report = Report.new(params)
     @results = @report.results
-    @listing = @report.listings.first
-    @listings = @report.listings
-    @agent   = @report.agent
-    @columns = @report.columns
-    @visitor_map = @report.results.map{|x| [x.latitude, x.longitude]}.sample(map_sample(@report))
-    aggregate_listings
-    gflash  :success => {:value =>  "OOOHHH YEAH!!!! Listing report for #{@listing.location.address}", :image => @listing.images.first["thumb_url"]}
+    if @results == nil || @results.count == 0
+      redirect_to request.referer
+      gflash :warning => "Found zero results for listing given."
+    else
+      @listing = @report.listings.first
+      @listings = @report.listings
+      @agent   = @report.agent
+      @columns = @report.columns
+      @visitor_map = @report.results.map{|x| [x.latitude, x.longitude]}.sample(map_sample(@report))
+      aggregate_listings
+      gflash  :success => {:value =>  "Listing report for #{@listing.location.address}", :image => @listing.images.first["thumb_url"]}
+    end
   end
 
   def agents   
