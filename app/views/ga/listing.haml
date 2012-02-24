@@ -60,7 +60,7 @@
         %td{colspan: "2"}
           %h3
             Listing visitor locations:
-          = image_tag visitor_pin_map(@visitor_map, 720,450), {style: "margin: auto"}
+          = image_tag visitor_pin_map(@visitor_map, 720, 650)
   - if @columns
     %fieldset
       .results
@@ -171,7 +171,6 @@
 -#= debug @stuff
 -#- if defined? @results.fields
 = debug @columns
--# = debug @listing
 #map.modal.fade
   .modal-header
     =link_to "x", "#", class: "close", "data-dismiss" => "modal"

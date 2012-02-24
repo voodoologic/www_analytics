@@ -14,7 +14,7 @@ class GaController < ApplicationController # before_filter :profiles_list
 
       if @results.count == 0
         redirect_to request.referer
-        gflash :warning => "Found zero results for the given search criteria."
+        gflash :warning => "Found zero results for #{@agent.display_name}."
       else
         aggregate_listings
         #gflash  :success => {:value =>  "OOOHHH YEAH!!!! Listing report for #{@agent.display_name}", :image => @agent.image.first["thumb_url"]}
@@ -37,7 +37,7 @@ class GaController < ApplicationController # before_filter :profiles_list
     @listings = @report.listings
     @agent   = @report.agent
     @columns = @report.columns
-    @visitor_map = @report.results.map{|x| [x.latitude, x.longitude]}
+    @visitor_map = @report.results.map{|x| [x.latitude, x.longitude]}.sample(map_sample(@report))
     aggregate_listings
     gflash  :success => {:value =>  "OOOHHH YEAH!!!! Listing report for #{@listing.location.address}", :image => @listing.images.first["thumb_url"]}
   end
@@ -61,6 +61,13 @@ class GaController < ApplicationController # before_filter :profiles_list
 
   private
 
+  def map_sample(report)
+    if report.results.count < 90
+      report.results.count
+    else 
+      90
+    end
+  end
 
   def listing_snipe(listing_url)
     snipe = listing_url.match(/\/listing(\/[\w\-]+){4}|\/listings\/(\d{7,})\/gallery(\?refer=map)?/)
