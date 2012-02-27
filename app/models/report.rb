@@ -19,22 +19,16 @@ class Report < Garb::ResultSet
     if params[:listingid]
       # only on listing but creating an array for use in methods below
       @listings = Array.new(1, Listing.find(params[:listingid]) )
-      # @listing = WmsSvcConsumer::Models::Listing.find(snipe_listing_from_url(params["listing"]))
       @agent = @listings.first.agent
       @listingsids = @listings.map(&:listingid)
-      begin
-        @results = filtered_results(GoogleAnalytics.const_get(param_to_class('social media')).results(profile,
-                                                                          # :filters => listings_to_filters(@listing ),
-                                                                          :filters => {:page_path.contains => @listingsids.first},
-                                                                          :end_date => Date.today,
-                                                                          # :start_date => Date.parse(params["start_date"])
-                                                                          :start_date => 1.month.ago
-                                                                          )
-                                    )
-      rescue NoMethodError
-        @results = nil
-      end
-
+      @results = filtered_results(GoogleAnalytics.const_get(param_to_class('social media')).results(profile,
+                                                                        # :filters => listings_to_filters(@listing ),
+                                                                        :filters => {:page_path.contains => @listingsids.first},
+                                                                        :end_date => Date.today,
+                                                                        # :start_date => Date.parse(params["start_date"])
+                                                                        :start_date => 1.month.ago
+                                                                        )
+                                  )
       @columns = column_generator
 
     elsif params["agent"]
@@ -62,7 +56,6 @@ class Report < Garb::ResultSet
 
   def test
     profile ||=  Garb::Management::Profile.all.detect{|p| p.web_property_id == "UA-384279-1"}
-    # @listing = self.snipe_listing_from_url('http://www.windermere.com/listing/WA/Kirkland/13245-Holmes-Point-Dr-Ne-98034/10872720')
     # @listing = listings_to_filters('10872720')
     GoogleAnalytics.const_get("AgentListings").results(profile, 
                                       :filters => listings_to_filters(11736186),
@@ -84,11 +77,15 @@ class Report < Garb::ResultSet
   end
 
   def filtered_results(results)
-    filtered_results = []
-    results.each do |result|
-      filtered_results << result if result.send(:page_path).match(/\/listing(\/[\w\-]+){4}|\/listings\/(\d{7,})\/gallery(\?refer=map)?/)
+    unless results == 0 || results.nil?
+      filtered_results = []
+      results.each do |result|
+        filtered_results << result if result.send(:page_path).match(/\/listing(\/[\w\-]+){4}|\/listings\/(\d{7,})\/gallery(\?refer=map)?/)
+      end
+      assign_uuid_to_result(filtered_results)
+    else
+      nil
     end
-    assign_uuid_to_result(filtered_results)
   end
 
   #assigns uuid to results
@@ -152,10 +149,9 @@ class Report < Garb::ResultSet
 
 
   def column_generator
-    begin
+    unless @results.nil?
       @columns = arrange_columns( @results.first.fields )
-    rescue NoMethodError
-      puts "there was no value returned by analytics"
+    else  
       @columns = [:page_path, :date, :pageviews, :unique_pageviews]
     end
   end
