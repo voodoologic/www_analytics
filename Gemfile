@@ -9,6 +9,9 @@ gem 'sqlite3'
 gem 'pg', '0.11.0', :require => 'pg'
 gem 'gritter'
 gem 'geocoder'
+gem 'pry'
+gem 'pry-doc'
+
 
 # gem 'garb'
 # gem 'garb', :git => "https://github.com/seomoz/garb.git" # log in erro
@@ -51,6 +54,7 @@ group :test do
   # Pretty printed test output
   gem 'turn', '0.8.2', :require => false
   gem 'cucumber-rails', :require => false
+  gem 'factory_girl'
   gem 'rspec-rails'
   gem 'capybara'
   gem 'vcr'
