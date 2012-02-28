@@ -23,10 +23,10 @@ require 'spec_helper'
         @report.should have_at_least(1).results
       end
     end
-    context "report has no analytical results" do 
-      # report_mock = Report.new({report: 'agent listing',  agent: '2acf67e5-75d1-482b-87ae-c4e4ad75a994', start_date: "2012-01-27", office: 8008563})
-      report_mock.should_recieve(:results).and_return(0)
-      report_mock.results.should_not be(nil) && report_mock.resuts.should == 0
+    describe "report has no analytical results" do 
+      report = Report.new({report: 'agent listing',  agent: '2acf67e5-75d1-482b-87ae-c4e4ad75a994', start_date: "2012-01-27", office: 8008563})
+      report.stub!(:filtered_results).and_return(0)
+      report.results.should_not be(nil) && report.resuts.should == 0
     end
 
     describe @report.results do 
