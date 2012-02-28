@@ -54,7 +54,8 @@ group :test do
   # Pretty printed test output
   gem 'turn', '0.8.2', :require => false
   gem 'cucumber-rails', :require => false
-  gem 'factory_girl'
+  gem 'factory_girl_rails'
+  gem 'autotest'
   gem 'rspec-rails'
   gem 'capybara'
   gem 'vcr'

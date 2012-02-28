@@ -2,13 +2,11 @@ class Report < Garb::ResultSet
   require 'rubygems'
   require 'wms_svc_consumer'
   require 'date'
-  attr_accessor :uuid, :date_dimension, :agent, :office, :columns, :listings, :listing, :results, :report, :start_date
+  attr_accessor :uuid, :date_dimension, :agent, :office, :columns, :listings, :results, :report, :start_date
   USER = Rails.application.config.analytics_login[:user]
   PASSWORD = Rails.application.config.analytics_login[:password]
   Garb::Session.login(USER, PASSWORD)
   def initialize(params)
-    puts params
-    # args.each {|k,v| instance_variable_set("@#{k}", v)}
     query(params)
     super(@results)
   end
@@ -20,10 +18,10 @@ class Report < Garb::ResultSet
       # only on listing but creating an array for use in methods below
       @listings = Array.new(1, Listing.find(params[:listingid]) )
       @agent = @listings.first.agent
-      @listingsids = @listings.map(&:listingid)
+      @listingsIds = @listings.map(&:listingid)
       @results = filtered_results(GoogleAnalytics.const_get(param_to_class('social media')).results(profile,
                                                                         # :filters => listings_to_filters(@listing ),
-                                                                        :filters => {:page_path.contains => @listingsids.first},
+                                                                        :filters => {:page_path.contains => @listingsIds.first},
                                                                         :end_date => Date.today,
                                                                         # :start_date => Date.parse(params["start_date"])
                                                                         :start_date => 1.month.ago
@@ -31,14 +29,14 @@ class Report < Garb::ResultSet
                                   )
       @columns = column_generator
 
-    elsif params["agent"]
-      @agent = Agent.find(params["agent"])
+    elsif params[:agent]
+      @agent = Agent.find(params[:agent])
       @listings = Listing.find_all_by_agent(@agent.uuid).results
-      @listingsids = @listings.map(&:listingid)
-      @results = filtered_results(GoogleAnalytics.const_get(param_to_class(params["report"])).results(profile,
-                                                                         :filters => listings_to_filters(@listingsids),
+      @listingsIds = @listings.map(&:listingid)
+      @results = filtered_results(GoogleAnalytics.const_get(param_to_class(params[:report])).results(profile,
+                                                                         :filters => listings_to_filters(@listingsIds),
                                                                          :end_date => Date.today,
-                                                                         :start_date => Date.parse(params["start_date"])
+                                                                         :start_date => Date.parse(params[:start_date])
                                                                         )
                                   )
       @columns = column_generator
@@ -84,14 +82,14 @@ class Report < Garb::ResultSet
       end
       assign_uuid_to_result(filtered_results)
     else
-      nil
+      0
     end
   end
 
   #assigns uuid to results
   def assign_uuid_to_result(filtered_results)
     filtered_results.class.instance_eval('attr_accessor :uuid, :date_dimension, :latitude, :longitude')
-    @listingsids.each do |id|
+    @listingsIds.each do |id|
       filtered_results.each do |listing|
         if listing.send(:page_path).match(/#{id}/)
           listing.uuid = id
@@ -149,9 +147,9 @@ class Report < Garb::ResultSet
 
 
   def column_generator
-    unless @results.nil?
+    unless @results == 0
       @columns = arrange_columns( @results.first.fields )
-    else  
+    else
       @columns = [:page_path, :date, :pageviews, :unique_pageviews]
     end
   end
