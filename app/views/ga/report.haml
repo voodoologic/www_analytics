@@ -42,7 +42,6 @@
               = select :report, :start_date, options_for_select([ ["one day", "#{1.day.ago.to_date}"], ["one week", "#{1.week.ago.to_date}"], ["two weeks","#{2.weeks.ago.to_date}"], ["one month","#{1.month.ago.to_date}"], ["three month","#{3.months.ago.to_date}"], ["six months","#{6.months.ago.to_date}"] ], selected: 1.month.ago.to_date)
           %tr
             %td
-              = hidden_field :report, :office, value: @office.uuid
               = submit_tag "Submit", :onclick => "show_spinner()"
             %td
 

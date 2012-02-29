@@ -14,20 +14,17 @@ class Report < Garb::ResultSet
   def query(params)
     profile =  Garb::Management::Profile.all.detect{|p| p.web_property_id == "UA-384279-1"}
     # if !params["report"].blank?
-    if params[:listingid]
-      # only on listing but creating an array for use in methods below
+    if !params[:listingid].blank?
+      # only one listing, but creating an array for use in methods below
       @listings = Array.new(1, Listing.find(params[:listingid]) )
       @agent = @listings.first.agent
       @listingsIds = @listings.map(&:listingid)
       @results = filtered_results(GoogleAnalytics.const_get(param_to_class('social media')).results(profile,
-                                                                        # :filters => listings_to_filters(@listing ),
                                                                         :filters => {:page_path.contains => @listingsIds.first},
                                                                         :end_date => Date.today,
-                                                                        # :start_date => Date.parse(params["start_date"])
                                                                         :start_date => 1.month.ago
                                                                         )
                                   )
-      @columns = column_generator
 
     elsif params[:agent]
       @agent = Agent.find(params[:agent])
@@ -39,23 +36,14 @@ class Report < Garb::ResultSet
                                                                          :start_date => Date.parse(params[:start_date])
                                                                         )
                                   )
-      @columns = column_generator
 
-    elsif params["report"]
-      @results = googleanalytics.const_get(param_to_class(params["report"])).results(profile, 
-                                                                         :filters =>  get_office_listings(params["office"]),
-                                                                         :end_date => date.today,
-                                                                         :start_date => date.parse(params[:start_date])
-                                                                        )
-    #there is an opportunity to sort the columns below
-      @columns = column_generator
     end
+    @columns = column_generator
   end
 
   def test
     profile ||=  Garb::Management::Profile.all.detect{|p| p.web_property_id == "UA-384279-1"}
-    # @listing = listings_to_filters('10872720')
-    GoogleAnalytics.const_get("AgentListings").results(profile, 
+    GoogleAnalytics.const_get("Agent Listing").results(profile, 
                                       :filters => listings_to_filters(11736186),
                                       :end_date => ::Date.today,
                                       :start_date => 1.month.ago.to_date
@@ -75,14 +63,14 @@ class Report < Garb::ResultSet
   end
 
   def filtered_results(results)
-    unless results == 0 || results.nil?
+    unless results.nil?
       filtered_results = []
       results.each do |result|
         filtered_results << result if result.send(:page_path).match(/\/listing(\/[\w\-]+){4}|\/listings\/(\d{7,})\/gallery(\?refer=map)?/)
       end
       assign_uuid_to_result(filtered_results)
     else
-      0
+      []
     end
   end
 
@@ -100,7 +88,7 @@ class Report < Garb::ResultSet
   end
 
   #grab the listing id from url string
-  def snipe_listing_from_url(listing_url)
+  def self.snipe_listing_from_url(listing_url)
     snipe = listing_url.match(/\/listing(\/[\w\-]+){4}|\/listings\/(\d{7,})\/gallery(\?refer=map)?/)
     if snipe
       result1, result2, result3 = snipe[1], snipe[2], snipe[3]
@@ -147,11 +135,41 @@ class Report < Garb::ResultSet
 
 
   def column_generator
-    unless @results == 0
+    unless @results.nil?
       @columns = arrange_columns( @results.first.fields )
     else
       @columns = [:page_path, :date, :pageviews, :unique_pageviews]
     end
+  end
+
+  # attempt to refactor this into model
+  def aggregate_listings
+    @listing_page_visits = Array.new
+    @listings.each { |listing|
+      @date_visits = Hash.new(0)
+      @results.each{ |result|
+        if result.send(@columns[0]).include? listing.listingid.to_s
+          visits = @date_visits[result.send(@columns[1])]
+          if visits == 0
+            visits = Array.new(3, 0)
+          end
+
+          if result.send(@columns[0]).include? "refer=map"
+            visits[0] += result.send(@columns[2]).to_i # pageviews
+          elsif result.send(@columns[0]).include? "/gallery"
+            visits[1] += result.send(@columns[2]).to_i
+          else
+            visits[2] += result.send(@columns[2]).to_i
+          end
+
+          @date_visits[result.send(@columns[1])] = visits
+
+        end
+      }
+
+      #puts Hash[@date_visits.sort]
+      @listing_page_visits << [listing.listingid, Hash[@date_visits.sort]]
+    }
   end
 end
 

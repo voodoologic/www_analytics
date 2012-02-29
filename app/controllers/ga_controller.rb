@@ -3,37 +3,32 @@ class GaController < ApplicationController # before_filter :profiles_list
   def report   
     @title = "Windermere analytics test report"
     unless params[:report].nil?
-      if !params[:report]['listing'].blank?
-        redirect_to listing_path(:listingid => listing_snipe(params[:report][:listing]))
+      if !params[:report][:listing].blank?
+        redirect_to listing_path(:listingid => Report.snipe_listing_from_url(params[:report][:listing]))
         return 
       else
-      @report = Report.new(params[:report])
-      @results = @report.results
-      @agent   = @report.agent
-      @listings = @report.listings
-
-      if @results.count == 0
-        redirect_to request.referer
-        gflash :warning => "Found zero results for #{@agent.display_name}."
-      else
-        aggregate_listings
-        #gflash  :success => {:value =>  "OOOHHH YEAH!!!! Listing report for #{@agent.display_name}", :image => @agent.image.first["thumb_url"]}
-      end
-      #@columns = @results.first.fields
+        @report = Report.new(params[:report])
+        @results = @report.results
+        @agent   = @report.agent
+        @listings = @report.listings
+        @columns = @report.columns
+        if @results.count == 0
+          redirect_to request.referer
+          gflash :warning => "Found zero results for #{@agent.display_name}."
+        else
+          aggregate_listings
+          #gflash  :success => {:value =>  "OOOHHH YEAH!!!! Listing report for #{@agent.display_name}", :image => @agent.image.first["thumb_url"]}
+        end
       end
     end
   end
 
-  def empty
-    @listings = Listing.find_all_by_agent(params[:report][:agent])
-  end
-  
   def listing
     @title   = "Windermere analytics test report"
     # @results = Report.new(params[:report])
-    @report = Report.new(params)
+    @report = Report.new({listingid: params[:listingid]})
     @results = @report.results
-    if @results == nil || @results.count == 0
+    if @results.empty? 
       redirect_to request.referer
       gflash :warning => "Found zero results for listing given."
     else
@@ -41,66 +36,32 @@ class GaController < ApplicationController # before_filter :profiles_list
       @listings = @report.listings
       @agent   = @report.agent
       @columns = @report.columns
-      @visitor_map = @report.results.map{|x| [x.latitude, x.longitude]}.sample(map_sample(@report))
+      @visitor_map = @report.results.map{|x| [x.latitude, x.longitude]}.sample(map_sample(@results.count))
       aggregate_listings
       gflash  :success => {:value =>  "Listing report for #{@listing.location.address}", :image => @listing.images.first["thumb_url"]}
     end
   end
 
-  def agents   
-    @stuff = {}
-    @title = "Windermere analytics - agents"
-    set_agent_params
-    unless params[:profile].nil?
-      @results = listings_only_filter(params[:profile])
-      @stuff = params[:profile]
-      @start_date = Ga.start_date(params[:profile])
-      @end_date = Ga.end_date(params[:profile])
-    render "ga/show"
-    end
-  end
-
-  def profiles_list
-    @profiles = Ga.profiles
-  end
-
   private
 
-  def map_sample(report)
-    if report.results.count < 90
-      report.results.count
+  # keeps the google map from erroring out 
+  def map_sample(results_count)
+    if results_count < 90
+      results_count
     else 
       90
     end
   end
 
-  def listing_snipe(listing_url)
-    snipe = listing_url.match(/\/listing(\/[\w\-]+){4}|\/listings\/(\d{7,})\/gallery(\?refer=map)?/)
-    if snipe
-      result1, result2, result3 = snipe[1], snipe[2], snipe[3]
-      if result1
-        listingid = result1.sub("/","")
-      elsif result2
-        listingid = result2
-      elsif result3
-        listingid = result3
-      end
-    end
-      
-  end
   def aggregate_listings
     @listing_page_visits = Array.new
-    @columns = @report.columns
     @listings.each { |listing|
       @date_visits = Hash.new(0)
       @results.each{ |result|
         if result.send(@columns[0]).include? listing.listingid.to_s
           visits = @date_visits[result.send(@columns[1])]
           if visits == 0
-            visits = Array.new
-            visits[0] = 0
-            visits[1] = 0
-            visits[2] = 0
+            visits = Array.new(3, 0)
           end
 
           if result.send(@columns[0]).include? "refer=map"
@@ -119,8 +80,6 @@ class GaController < ApplicationController # before_filter :profiles_list
       #puts Hash[@date_visits.sort]
       @listing_page_visits << [listing.listingid, Hash[@date_visits.sort]]
     }
-
-    @columns = @report.columns
   end
 end
 

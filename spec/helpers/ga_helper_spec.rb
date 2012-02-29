@@ -6,6 +6,6 @@ describe "report list", :vcr do
 
   it 'converts filenames to readable type' do 
     file = [Rails.root.to_s, "lib/google_analytics", "/agent_listing.rb"].join("/")
-    helper.reports_list.count.should == 1
+    helper.reports_list.count.should == 3
   end
 end
